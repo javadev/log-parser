@@ -25,6 +25,9 @@ public class LogParser {
     private static final String USAGE = "Usage: java -jar log-parser.jar ums.log --grep=\"text\"";
     private String grep;
     private String logFileName;
+    private java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("dd.MM.yy HH:mm:ss,SSS");
+    private java.text.DecimalFormat decFormat = new java.text.DecimalFormat("00");
+    private java.text.DecimalFormat decFormat3 = new java.text.DecimalFormat("000");
 
     /**.
      * @param args - the arguments
@@ -56,21 +59,46 @@ public class LogParser {
         }
         java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(logFileName));
         String line = null;
-        java.util.Map<String, String> outMessages = new java.util.LinkedHashMap<String, String>();
-        java.util.Map<String, String> inMessages = new java.util.LinkedHashMap<String, String>();
+        java.util.List<String> messages = new java.util.LinkedList<String>();
+        java.util.Map<String, Integer> outMessages = new java.util.LinkedHashMap<String, Integer>();
+        java.util.Map<String, Integer> inMessages = new java.util.LinkedHashMap<String, Integer>();
         while ((line = reader.readLine()) != null) {
             if (line.contains("OUT") && line.contains(grep)) {
                 String outMessage = line;
                 String outMessageId = line.replaceFirst(".*?messageId=(\\d+).*", "$1");
-                outMessages.put(outMessageId, outMessage);
+                outMessages.put(outMessageId, messages.size());
+                messages.add(line);
             } else if (line.contains("IN")) {
                 String inMessageId = line.replaceFirst(".*?messageId=(\\d+).*", "$1");
-                inMessages.put(inMessageId, line);
+                inMessages.put(inMessageId, messages.size());
+                messages.add(line);
             }
+System.out.print(".\\8");
         }
-        for (java.util.Map.Entry<String, String> entry : outMessages.entrySet()) {
-            System.out.println(entry.getValue());
-            System.out.println(inMessages.get(entry.getKey()));
+        for (java.util.Map.Entry<String, Integer> entry : outMessages.entrySet()) {
+            String diffTime = calcDiffTime(messages.get(entry.getValue()), messages.get(inMessages.get(entry.getKey())));
+            System.out.println(diffTime + "|" + messages.get(entry.getValue()));
+            System.out.println(diffTime + "|" + messages.get(inMessages.get(entry.getKey())));
         }
+    }
+
+    public String calcDiffTime(String startTime, String endTime) {
+        String result = "";
+        String startDate = startTime.replaceFirst(".*?(\\d{2}\\.\\d{2}.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        String endDate = endTime.replaceFirst(".*?(\\d{2}\\.\\d{2}.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        try {
+            long start = formatter.parse(startDate).getTime();
+            long end = formatter.parse(endDate).getTime();
+            long diff = end - start;
+            long millis = diff % 1000;
+            diff /= 1000;
+            long seconds = diff % 60;
+            diff /= 60;
+            long minutes = diff % 60;
+            diff /= 60;
+            long hours = diff;
+            result = decFormat.format(hours) + ":" + decFormat.format(minutes) + ":" + decFormat.format(seconds) + "," + decFormat3.format(millis);
+        } catch (java.text.ParseException ex) {};
+        return result;
     }
 }
