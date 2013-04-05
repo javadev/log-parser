@@ -1,1 +1,1 @@
-java -jar log-parser.jar ums.log --grep=alance >result.log
+java -jar log-parser.jar ums.log --grep=test701 >test701.log
