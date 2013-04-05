@@ -25,7 +25,7 @@ public class LogParser {
     private static final String USAGE = "Usage: java -jar log-parser.jar ums.log --grep=\"text\"";
     private String grep;
     private String logFileName;
-    private java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("dd.MM.yy HH:mm:ss,SSS");
+    private java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("MM-dd HH:mm:ss,SSS");
     private java.text.DecimalFormat decFormat = new java.text.DecimalFormat("00");
     private java.text.DecimalFormat decFormat3 = new java.text.DecimalFormat("000");
 
@@ -73,19 +73,20 @@ public class LogParser {
                 inMessages.put(inMessageId, messages.size());
                 messages.add(line);
             }
-System.out.print(".\\8");
         }
         for (java.util.Map.Entry<String, Integer> entry : outMessages.entrySet()) {
-            String diffTime = calcDiffTime(messages.get(entry.getValue()), messages.get(inMessages.get(entry.getKey())));
-            System.out.println(diffTime + "|" + messages.get(entry.getValue()));
-            System.out.println(diffTime + "|" + messages.get(inMessages.get(entry.getKey())));
+            if (inMessages.get(entry.getKey()) != null) {
+                String diffTime = calcDiffTime(messages.get(entry.getValue()), messages.get(inMessages.get(entry.getKey())));
+                System.out.println(diffTime + "|" + messages.get(entry.getValue()));
+                System.out.println(diffTime + "|" + messages.get(inMessages.get(entry.getKey())));
+            }
         }
     }
 
     public String calcDiffTime(String startTime, String endTime) {
         String result = "";
-        String startDate = startTime.replaceFirst(".*?(\\d{2}\\.\\d{2}.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
-        String endDate = endTime.replaceFirst(".*?(\\d{2}\\.\\d{2}.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        String startDate = startTime.replaceFirst(".*?(\\d{2}\\-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        String endDate = endTime.replaceFirst(".*?(\\d{2}\\-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
         try {
             long start = formatter.parse(startDate).getTime();
             long end = formatter.parse(endDate).getTime();
@@ -98,7 +99,9 @@ System.out.print(".\\8");
             diff /= 60;
             long hours = diff;
             result = decFormat.format(hours) + ":" + decFormat.format(minutes) + ":" + decFormat.format(seconds) + "," + decFormat3.format(millis);
-        } catch (java.text.ParseException ex) {};
+        } catch (java.text.ParseException ex) {
+                ex.printStackTrace();
+        };
         return result;
     }
 }
