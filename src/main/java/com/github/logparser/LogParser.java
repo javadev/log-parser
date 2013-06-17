@@ -25,7 +25,7 @@ public class LogParser {
     private static final String USAGE = "Usage: java -jar log-parser.jar ums.log --grep=\"text\"";
     private String grep;
     private String logFileName;
-    private java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("MM-dd HH:mm:ss,SSS");
+    private java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("MM.dd.yy HH:mm:ss,SSS");
     private java.text.DecimalFormat decFormat = new java.text.DecimalFormat("00");
     private java.text.DecimalFormat decFormat3 = new java.text.DecimalFormat("000");
 
@@ -63,12 +63,12 @@ public class LogParser {
         java.util.Map<String, Integer> outMessages = new java.util.LinkedHashMap<String, Integer>();
         java.util.Map<String, Integer> inMessages = new java.util.LinkedHashMap<String, Integer>();
         while ((line = reader.readLine()) != null) {
-            if (line.contains("OUT") && line.contains(grep)) {
+            if (line.length() < 5000 && line.contains("OUT") && line.contains(grep)) {
                 String outMessage = line;
                 String outMessageId = line.replaceFirst(".*?messageId=(\\d+).*", "$1");
                 outMessages.put(outMessageId, messages.size());
                 messages.add(line);
-            } else if (line.contains("IN")) {
+            } else if (line.length() < 5000 && line.contains("IN")) {
                 String inMessageId = line.replaceFirst(".*?messageId=(\\d+).*", "$1");
                 inMessages.put(inMessageId, messages.size());
                 messages.add(line);
@@ -79,14 +79,17 @@ public class LogParser {
                 String diffTime = calcDiffTime(messages.get(entry.getValue()), messages.get(inMessages.get(entry.getKey())));
                 System.out.println(diffTime + "|" + messages.get(entry.getValue()));
                 System.out.println(diffTime + "|" + messages.get(inMessages.get(entry.getKey())));
+            } else {
+                System.out.println("UNPROCESSED OUT MESSAGE|" + messages.get(entry.getValue()));
             }
+
         }
     }
 
     public String calcDiffTime(String startTime, String endTime) {
         String result = "";
-        String startDate = startTime.replaceFirst(".*?(\\d{2}\\-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
-        String endDate = endTime.replaceFirst(".*?(\\d{2}\\-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        String startDate = startTime.replaceFirst(".*?(\\d{2}\\.\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
+        String endDate = endTime.replaceFirst(".*?(\\d{2}\\.\\d{2}\\.\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3}).*", "$1");
         try {
             long start = formatter.parse(startDate).getTime();
             long end = formatter.parse(endDate).getTime();
